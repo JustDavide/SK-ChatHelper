@@ -1,0 +1,64 @@
+# Depends on: SKBee (TabCompletions)
+
+on load:
+    if {timedelay} is not set:  
+        set {timeDelay} to 2
+    if {enabled} is not set:
+        set {enabled} to true
+
+on chat:
+    if player has permission "chat.bypass":
+        stop
+          
+    if {enabled} is true:
+        if {chat_delay::%player%} is not set:
+            set {chat_delay::%player%} to {timeDelay}
+            set {chat_countdown::%player%} to true
+        
+            while {chat_countdown::%player%} is true:
+                if {chat_delay::%player%} isn't 0:
+                    wait 1 second
+                    subtract 1 from {chat_delay::%player%}
+                else:
+                    delete {chat_delay::%player%}
+                    set {chat_countdown::%player%} to false
+                
+        if {chat_delay::%player%} is set:
+            if {chat_delay::%player%} < 0:
+                delete {chat_delay::%player%}
+                set {chat_countdown::%player%} to false
+                stop
+            
+            cancel event
+            send "&c&lAC &7You have to wait %{chat_delay::%player%}% seconds to chat again."
+
+
+command /adminchat <text> [<text>]:
+    permission: chat.admin
+    aliases: /chatadmin
+    permission message: &c&lAC &7You don't have enough permissions
+    usage: &c&lAC &7Usage: /adminchat <toggle/info/time> [time]
+    trigger:
+
+        if arg 1 is "toggle":
+            if {enabled} is true:
+                set {enabled} to false
+            else:
+                set {enabled} to true
+
+            broadcast "&a&lAC &7Slow chat set to %{enabled}%"
+        if arg 1 is "time":
+            if arg 2 is not set:
+                send "&c&lAC &7You have to specify a second argument." to player
+                stop
+            set {timeDelay} to arg 2 parsed as a number
+            broadcast "&a&lAC &7Slow chat timer set to %{timeDelay}%"
+        if arg 1 is "info":
+            send "&7-- &bChatAdmin Info &7--"
+            send "&7Delay: &8%{timeDelay}%"
+            send "&7Enabled: &8%{enabled}%"
+
+on tab complete of "/adminchat" or "/chatadmin":
+    set tab completions for position 1 to "toggle", "time" and "info"
+    set tab completions for position 2 to 1, 2, 3, 4 and 5
+
